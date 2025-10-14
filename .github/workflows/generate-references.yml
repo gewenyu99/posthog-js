@@ -1,18 +1,11 @@
 name: "Generate References"
 
 on:
-  workflow_call:
-    inputs:
-      package_name:
-        description: 'Package name to generate references for'
-        required: true
-        type: string
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
   workflow_dispatch:
-    inputs:
-      package_name:
-        description: 'Package name to generate references for'
-        required: true
-        type: string
 
 jobs:
   generate-references:
@@ -20,6 +13,14 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - name: posthog-js
+          - name: posthog-node
+          - name: posthog-react-native
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2
@@ -32,21 +33,34 @@ jobs:
 
       - name: Build packages
         run: pnpm build
-        
-      - name: Generate SDK references
-        run: turbo --filter="${{ github.event.inputs.package_name }}" generate-references
+
+      - name: Get package path
+        id: get-package-path
+        run: |
+          PACKAGE_PATH=$(pnpm list --filter=${{ matrix.package.name }} --json | jq -r '.[0].path')
+          echo "path=$PACKAGE_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Check ${{ matrix.package.name }} version and detect an update
+        id: check-package-version
+        uses: PostHog/check-package-version@v2.1.0
+        with:
+          path: ${{ steps.get-package-path.outputs.path }}
+
+      - name: Generate references for ${{ matrix.package.name }}
+        if: steps.check-package-version.outputs.is-new-version == 'true'
+        run: turbo --filter="${{ matrix.package.name }}" generate-references
 
       - name: Check for changes in references
         id: changes
         run: |
-          PACKAGE_DIR="packages/${{ github.event.inputs.package_name }}/references/"
+          PACKAGE_DIR="packages/${{ matrix.package.name }}/references/"
           if [ -n "$(git status --porcelain "$PACKAGE_DIR")" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
-            echo "New references generated for ${{ github.event.inputs.package_name }}:"
+            echo "New references generated for ${{ matrix.package.name }}:"
             git status --porcelain "$PACKAGE_DIR"
           else
             echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No new references generated for ${{ github.event.inputs.package_name }}"
+            echo "No new references generated for ${{ matrix.package.name }}"
           fi
       - uses: stefanzweifel/git-auto-commit-action@b3e3f72439fc3af08948f989a19a825463598a
         if: steps.changes.outputs.changed == 'true'
