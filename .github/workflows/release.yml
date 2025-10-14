@@ -54,15 +54,6 @@ jobs:
 
       - name: Generate references for ${{ matrix.package.name }}
         if: steps.check-package-version.outputs.is-new-version == 'true'
-        continue-on-error: true
-        run: |
-          curl -f -X POST \
-               -H "Accept: application/vnd.github+json" \
-               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-               https://api.github.com/repos/posthog/posthog-js/actions/workflows/generate-references.yml/dispatches \
-               -d '{
-                 "ref": "main",
-                 "inputs": {
-                   "package_name": "${{ matrix.package.name }}"
-                 }
-               }'
+        uses: ./.github/workflows/generate-references.yml
+        with:
+          package_name: ${{ matrix.package.name }}

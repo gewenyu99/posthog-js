@@ -1,6 +1,12 @@
 name: "Generate References"
 
 on:
+  workflow_call:
+    inputs:
+      package_name:
+        description: 'Package name to generate references for'
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       package_name:
