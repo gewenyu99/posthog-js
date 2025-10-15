@@ -48,15 +48,15 @@ jobs:
         with:
           path: ${{ steps.get-package-path.outputs.path }}
 
-      - name: Release package ${{ matrix.package.name }}
-        uses: ./.github/actions/release
-        if: steps.check-package-version.outputs.is-new-version == 'true'
-        with:
-          package_path: ${{ steps.get-package-path.outputs.path }}
-          package_name: ${{ matrix.package.name }}
-          package_version: ${{ steps.check-package-version.outputs.committed-version }}
-          npm_token: ${{ secrets.NPM_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Release package ${{ matrix.package.name }}
+      #   uses: ./.github/actions/release
+      #   if: steps.check-package-version.outputs.is-new-version == 'true'
+      #   with:
+      #     package_path: ${{ steps.get-package-path.outputs.path }}
+      #     package_name: ${{ matrix.package.name }}
+      #     package_version: ${{ steps.check-package-version.outputs.committed-version }}
+      #     npm_token: ${{ secrets.NPM_TOKEN }}
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dispatch generate-references for ${{ matrix.package.name }}
         if: steps.check-package-version.outputs.is-new-version == 'true'
