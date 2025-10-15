@@ -914,7 +914,7 @@ export class PostHog {
      * })
      * ```
      *
-     * {@label Capture}
+     * {@label Capturesssssssss}
      *
      * @public
      *
