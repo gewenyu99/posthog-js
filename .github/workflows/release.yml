@@ -60,8 +60,6 @@ jobs:
 
       - name: Dispatch generate-references for ${{ matrix.package.name }}
         if: steps.check-package-version.outputs.is-new-version == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run generate-references.yml \
             --ref main \
